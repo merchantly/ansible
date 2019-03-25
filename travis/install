@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-cd /etc/ansible/roles/merchantly/
-pwd
-ls -la
-env ANSIBLE_FORCE_COLOR=1 make install
