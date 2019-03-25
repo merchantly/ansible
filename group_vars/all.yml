@@ -1,3 +1,5 @@
+merchantly_user: www-data
+
 users_groups:
   - name: www-data
     system: true
