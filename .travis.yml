@@ -24,7 +24,6 @@ env:
 before_install:
   - 'sudo docker pull ${distribution}:${version}'
   - 'sudo docker build --no-cache --rm --file=travis/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible travis'
-  - 'ln -s merchantly.yml.example group_vars/merchantly.yml'
   - 'ln -s travis/hosts.ini hosts.ini'
 
 script:
