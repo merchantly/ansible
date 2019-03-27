@@ -1,0 +1,12 @@
+- name: ensure geoip database is installed
+  apt:
+    name: geoip-database
+    state: latest
+
+- name: ensure geoip lite city database is installed
+  get_url:
+    url: "{{ geoip_url }}"
+    dest: /usr/share/GeoIP/GeoLiteCity.dat
+    owner: root
+    group: root
+    mode: 0644

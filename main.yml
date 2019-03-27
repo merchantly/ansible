@@ -2,3 +2,4 @@
 - import_playbook: users.yml
 - import_playbook: node.yml
 - import_playbook: ruby.yml
+- import_playbook: geoip.yml
