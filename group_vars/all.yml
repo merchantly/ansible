@@ -23,3 +23,18 @@ nvm_default_node_version: v8.9.4
 nvm_node_versions:
   - "{{ nvm_default_node_version }}"
 nvm_root: "$HOME/.nvm"
+
+es_major_version: '5.x'
+es_version: "5.6.12"
+es_instance_name: "{{ ansible_hostname }}"
+es_enable_xpack: false
+es_plugins:
+  - plugin: "http://dl.bintray.com/content/imotov/elasticsearch-plugins/org/elasticsearch/elasticsearch-analysis-morphology/{{ es_version }}/elasticsearch-analysis-morphology-{{ es_version }}.zip"
+
+thumbor_ports: "{{ range(8881, 8881 + merchantly_thumbor_count | default(3), 1) | list }}"
+thumbor_security_key: "{{ merchantly_thumbor_security_key }}"
+thumbor_allowed_sources_site_name:
+  - "{{ merchantly_site_name | replace('.', '\\.') }}"
+  - ".+\\.{{ merchantly_site_name | replace('.', '\\.') }}"
+thumbor_allowed_sources_s3: "{{ [] if merchantly_static_s3 | default('') == '' else [merchantly_static_s3 | replace('.', '\\.')] }}"
+thumbor_allowed_sources: "{{ thumbor_allowed_sources_site_name + thumbor_allowed_sources_s3 }}"

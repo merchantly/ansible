@@ -1,0 +1,4 @@
+- name: ensure imagemagick is installed
+  apt:
+    name: imagemagick
+    state: latest

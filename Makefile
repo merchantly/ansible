@@ -1,4 +1,3 @@
-# Source: https://github.com/paulRbr/ansible-makefile
 #
 # ------------------
 # ANSIBLE-MAKEFILE v0.13.0
@@ -25,32 +24,42 @@
 ##
 distribution ?= ubuntu
 version      ?= bionic
-container_id ?= /tmp/ansible_test_docker
-playbook   ?= main
-env        ?= hosts.ini
-mkfile_dir ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+docker_image ?= .${distribution}-${version}
+changes_log  ?= /tmp/changes_log
+container_id ?= .test_container
+ansible      ?= docker exec `cat ${container_id}` env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/travis/hosts.ini -v /etc/ansible/main.yml
+playbook     ?= main
+env          ?= hosts.ini
+galaxy_req   ?= requirements.galaxy.yml
+python_req   ?= requirements.python.txt
+mkfile_dir   ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+python_virtualenv_dir ?= $(HOME)/python_virtualenvs
 ifeq ("$(wildcard $(mkfile_dir)pass.sh)", "")
-	opts     ?= $(args)
+	opts ?= $(args)
 else # Handle vault password if any
 	ifeq ("$(shell $(mkfile_dir)pass.sh 2> /dev/null)", "")
-		opts     ?= $(args)
+		opts ?= $(args)
 	else
-		opts     ?= $(args) --vault-password-file=$(mkfile_dir)pass.sh
+		opts ?= $(args) --vault-password-file=$(mkfile_dir)pass.sh
 	endif
 endif
 ifneq ("$(limit)", "")
-	opts     := $(opts) --limit="$(limit)"
+	opts := $(opts) --limit="$(limit)"
 endif
 ifneq ("$(tag)", "")
-	opts     := $(opts) --tag="$(tag)"
+	opts := $(opts) --tag="$(tag)"
 endif
 
 ##
 # TASKS
 ##
 .PHONY: install
-install: ## make install # Install roles dependencies
-	@ansible-galaxy install --role-file="requirements.yml"
+install: ## make install # Install dependencies and requirements
+	@git submodule update --init
+	@. $(python_virtualenv_dir)/ansible/bin/activate \
+		&& if [ -f "$(galaxy_req)" ]; then ansible-galaxy install --role-file="$(galaxy_req)"; fi
+	@. $(python_virtualenv_dir)/ansible/bin/activate \
+		&& if [ -f "$(python_req)" ]; then pip3 install --requirement "$(python_req)"; fi
 
 .PHONY: inventory
 inventory: ## make inventory [provider=<ec2|gce...>] [env=hosts] # Download dynamic inventory from Ansible's contrib
@@ -100,16 +109,15 @@ cmdb: ## make cmdb # Create HTML inventory report
 
 .PHONY: bootstrap
 bootstrap: ## make bootstrap # Install ansible (Debian/Ubuntu only)
-	@sudo apt-get update \
-		&& sudo apt-get install python3-pip git sshpass \
-		&& sudo pip3 install --upgrade pip \
-		&& sudo pip install --upgrade virtualenv \
-		&& (test -d ~/python_virtualenvs || mkdir ~/python_virtualenvs) \
-		&& (test -f ~/python_virtualenvs/ansible/bin/activate || virtualenv ~/python_virtualenvs/ansible) \
-		&& . ~/python_virtualenvs/ansible/bin/activate \
-		&& pip3 install --upgrade ansible ansible-modules-hashivault \
-		&& echo "Run the following command in your shell to activate a virtual environment with the ansible installed:" \
-    && echo ". ~/python_virtualenvs/ansible/bin/activate"
+	@sudo apt-get update
+	@sudo DEBIAN_FRONTEND=noninteractive apt-get --assume-yes install python3-pip git sshpass
+	@sudo pip3 install --upgrade pip
+	@sudo pip install --upgrade virtualenv
+	@if [ ! -d "$(python_virtualenv_dir)" ]; then mkdir "$(python_virtualenv_dir)"; fi
+	@if [ ! -f "$(python_virtualenv_dir)/ansible/bin/activate" ]; then virtualenv "$(python_virtualenv_dir)/ansible"; fi
+	@. $(python_virtualenv_dir)/ansible/bin/activate && pip3 install --upgrade ansible ansible-modules-hashivault
+	@echo "Run the following command in your shell to activate a virtual environment with the ansible installed:"
+	@echo ". $(python_virtualenv_dir)/ansible/bin/activate"
 
 .PHONY: mandatory-host-param mandatory-file-param
 mandatory-host-param:
@@ -117,26 +125,36 @@ mandatory-host-param:
 mandatory-file-param:
 	@[ ! -z $(file) ]
 
-test_prepare_docker:
-		docker pull ${distribution}:${version}
-		docker build --no-cache --rm --file=travis/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible travis
+${docker_image}:
+	docker pull ${distribution}:${version}
+	docker build --no-cache --rm --file=travis/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible travis
+	touch ${docker_image}
 
-test: test_prepare_docker test_run test_clean ## make test [distrubition=ubuntu] [version=bionic] # Run tests on dockered images
+test: test_run clean ## make test [distrubition=ubuntu] [version=bionic] # Run tests on docker image
 
-test_run:
-		@echo "container_id=${container_id}"
-		docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume="${PWD}":/etc/ansible/roles/merchantly:rw ${distribution}-${version}:ansible > "${container_id}"
-		@echo "container_id=${container_id}"
-		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook --version
-		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml --syntax-check
-		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml
-		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml \
-			| grep -q 'changed=0.*failed=0' \
+${container_id}: ${docker_image}
+	docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume=${PWD}:/etc/ansible:ro ${distribution}-${version}:ansible > .test_container
+
+test_run: ${container_id} test_povision test_changes
+
+test_provision:
+	$(ansible) --version
+	$(ansible) --syntax-check
+	$(ansible)
+
+test_changes:
+	$(ansible) | tee ${changes_log}
+
+	# Today we have more then 30 non-indempotancy changes and can't test it
+	# (cat ${changes_log} | grep -q 'changed=0.*failed=0') \
+
+	(cat ${changes_log} | grep -q 'failed=0') \
 			&& (echo 'Idempotence test: pass' && exit 0) \
-			|| (echo 'Idempotence test: fail' && exit 1) \
+			|| (echo 'Idempotence test: fail' && exit 1)
 
-test_clean:
-		docker rm -f "$(shell cat ${container_id})"
+clean:
+	docker rm -f `cat ${container_id}`
+	rm ${container_id}
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

@@ -1,12 +1,11 @@
-# vim:ft=ansible:
-- name: Install direnv
-  apt: name=direnv
-  tags: direnv
-- name: Install direnv profile hook
-  tags: direnv
-  copy: >
-    content='eval "$(direnv hook bash)"'
-    dest=/etc/profile.d/direnv.sh
-    owner=root
-    group=root
-    mode=0644
+- name: ensure direnv is installed
+  apt:
+    name: direnv
+
+- name: ensure direnv profile hook is installed
+  copy:
+    content: 'eval "$(direnv hook bash)"'
+    dest: /etc/profile.d/direnv.sh
+    owner: root
+    group: root
+    mode: 0644

@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+
+ALLOWED_SOURCES = [
+{% for source in thumbor_allowed_sources %}
+  '{{ source }}',
+{% endfor %}
+]
+SECURITY_KEY = '{{ thumbor_security_key }}'
+MAX_AGE = 2592000
+RESPECT_ORIENTATION = True
+USE_GIFSICLE_ENGINE = True
+LOADER = 'thumbor.loaders.http_loader'
+HTTP_LOADER_FORWARD_USER_AGENT = True
+STORES_CRYPTO_KEY_FOR_EACH_IMAGE = True
+FILTERS = [
+  'thumbor_text_filter',
+  'thumbor.filters.blur',
+]

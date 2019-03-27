@@ -113,3 +113,4 @@ venv.bak/
 !/group_vars/all.yml
 .ansible/*
 main.retry
+.*

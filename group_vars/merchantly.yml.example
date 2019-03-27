@@ -4,3 +4,16 @@ merchantly_user: merchantly
 # List of the ssh authorized keys that will be added to the application user account.
 #merchantly_user_auth_keys:
 #  - "{{ lookup('file', 'public_keys/john.smith') }}"
+
+# Site DNS name
+merchantly_site_name: example.com
+
+# Number of thumbor services that will be started. Default is 3.
+#merchantly_thumbor_count: 3
+
+# Thumber security key to prevent tampering with the url.
+# https://thumbor.readthedocs.io/en/latest/security.html#stopping-tampering
+merchantly_thumbor_security_key: fDGZdT84C9sJWUpgo1xRG4bHyQ8sCjyu
+
+# Hostname of the AWS S3 bucket where static files are placed
+#merchantly_static_s3: mybacket.s3.eu-central-1.amazonaws.com

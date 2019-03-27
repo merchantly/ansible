@@ -1,0 +1,9 @@
+- name: reload systemd daemons
+  systemd:
+    daemon_reload: yes
+
+- name: restart thumbor
+  systemd:
+    name: "thumbor@{{ item }}"
+    state: restarted
+  with_items: "{{ thumbor_ports }}"

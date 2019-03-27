@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Photo thumbnail service
+After=syslog.target network.target 
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/thumbor -p '%i' -c /etc/thumbor.conf
+
+[Install]
+WantedBy=default.target

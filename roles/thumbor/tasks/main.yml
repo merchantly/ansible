@@ -1,0 +1,51 @@
+- name: ensure thumbor dependencies are installed
+  apt: 
+    name:
+      - gifsicle
+      - ffmpeg
+      - libjpeg-dev
+      - libpng-dev
+      - libtiff-dev
+      - libgtk2.0-dev
+      - python-numpy
+      - python-pycurl
+      - webp
+      - python-opencv
+      - python-dev
+      - python-pip
+    state: present
+
+- name: gather information about installed packages
+  package_facts:
+
+- name: ensure pip packages are installed
+  pip:
+    name:
+      - thumbor
+      - thumbor_text_filter    
+    executable: "{{ 'pip' if 'python3-pip' not in ansible_facts.packages else 'pip2' }}"
+
+- name: ensure thumbor is configured
+  template:
+    src: etc/thumbor.conf.j2
+    dest: /etc/thumbor.conf
+    owner: root
+    group: root
+  notify:
+    - restart thumbor
+    
+- name: ensure thumbor systemd unit is installed
+  template:
+    src: etc/systemd/system/thumbor@.service.j2
+    dest: /etc/systemd/system/thumbor@.service
+    owner: root
+    group: root
+  notify:
+    - reload systemd daemons
+
+- name: ensure thumbor services are started and enabled
+  systemd:
+    name: "thumbor@{{ item }}"
+    state: started
+    enabled: yes
+  with_items: "{{ thumbor_ports }}"

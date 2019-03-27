@@ -7,3 +7,9 @@
 [submodule "roles/rbenv"]
 	path = roles/rbenv
 	url = https://github.com/zzet/ansible-rbenv-role.git
+[submodule "roles/elasticsearch"]
+	path = roles/elasticsearch
+	url = https://github.com/elastic/ansible-elasticsearch.git
+[submodule "roles/redis"]
+	path = roles/redis
+	url = https://github.com/geerlingguy/ansible-role-redis.git

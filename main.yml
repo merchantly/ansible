@@ -1,5 +1,9 @@
----
 - import_playbook: users.yml
 - import_playbook: node.yml
 - import_playbook: ruby.yml
 - import_playbook: geoip.yml
+- import_playbook: elasticsearch.yml
+- import_playbook: redis.yml
+- import_playbook: imagemagick.yml
+- import_playbook: thumbor.yml
+

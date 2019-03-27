@@ -1,0 +1,4 @@
+thumbor_security_key: ''
+thumbor_allowed_sources: []
+thumbor_ports:
+- 8881
