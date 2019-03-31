@@ -112,5 +112,4 @@ venv.bak/
 !/*.example
 !/group_vars/all.yml
 .ansible/*
-
 main.retry

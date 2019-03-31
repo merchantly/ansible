@@ -1,9 +1,4 @@
 - hosts: all
-  pre_tasks:
-    - name: Install apt for node
-      apt: name={{item}} state=present
-      with_items:
-        - curl
   roles:
     - yarn
     - nvm

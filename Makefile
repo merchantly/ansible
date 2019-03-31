@@ -25,7 +25,7 @@
 ##
 distribution ?= ubuntu
 version      ?= bionic
-container_id ?= $(shell mktemp)
+container_id ?= /tmp/ansible_test_docker
 playbook   ?= main
 env        ?= hosts.ini
 mkfile_dir ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -121,13 +121,12 @@ test_prepare_docker:
 		docker pull ${distribution}:${version}
 		docker build --no-cache --rm --file=travis/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible travis
 
-test: test_prepare_docker test_run_docker test_run test_clean ## make test [distrubition=ubuntu] [version=bionic] # Run tests on dockered images
-
-test_run_docker:
-		@echo "container_id=${container_id}"
-		docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume="${PWD}":/etc/ansible/roles/merchantly:rw ${distribution}-${version}:ansible > ${container_id}
+test: test_prepare_docker test_run test_clean ## make test [distrubition=ubuntu] [version=bionic] # Run tests on dockered images
 
 test_run:
+		@echo "container_id=${container_id}"
+		docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume="${PWD}":/etc/ansible/roles/merchantly:rw ${distribution}-${version}:ansible > "${container_id}"
+		@echo "container_id=${container_id}"
 		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook --version
 		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml --syntax-check
 		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml
@@ -143,4 +142,3 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help
-

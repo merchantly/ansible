@@ -1,6 +1,6 @@
 ---
 
-# The example stolen from
+# This example is stolen from
 # https://github.com/drhelius/travis-ansible-demo/blob/master/.travis.yml
 
 sudo: required
@@ -18,6 +18,9 @@ env:
     version: bionic
   - distribution: ubuntu
     version: xenial
+
+before_install:
+  - 'ln -s merchantly.yml.example group_vars/merchantly.yml'
 
 script:
   - 'sudo make test'
