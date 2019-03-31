@@ -20,4 +20,4 @@ env:
     version: xenial
 
 script:
-  - 'sudo make tests'
+  - 'sudo make test'

@@ -117,17 +117,17 @@ mandatory-host-param:
 mandatory-file-param:
 	@[ ! -z $(file) ]
 
-prepare_docker:
+tests_prepare_docker:
 		docker pull ${distribution}:${version}
 		docker build --no-cache --rm --file=travis/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible travis
 
-test: prepare_docker run_docker run_tests clean_tests ## make test [distrubition=ubuntu] [version=bionic] # Run tests on dockered images
+test: tests_prepare_docker tests_run_docker tests_run tests_clean ## make test [distrubition=ubuntu] [version=bionic] # Run tests on dockered images
 
-run_docker:
+tests_run_docker:
 		@echo "${container_id}"
 		docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume="${PWD}":/etc/ansible/roles/merchantly:rw ${distribution}-${version}:ansible > "${container_id}"
 
-run_tests:
+tests_run:
 		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook --version
 		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml --syntax-check
 		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml
@@ -136,7 +136,7 @@ run_tests:
 			&& (echo 'Idempotence test: pass' && exit 0) \
 			|| (echo 'Idempotence test: fail' && exit 1) \
 
-clean_tests:
+tests_clean:
 		docker rm -f "$(shell cat ${container_id})"
 
 help:
