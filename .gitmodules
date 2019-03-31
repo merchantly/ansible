@@ -6,4 +6,4 @@
 	url = https://github.com/tepez/ansible-role-nvm.git
 [submodule "roles/rbenv"]
 	path = roles/rbenv
-	url = https://github.com/zzet/ansible-rbenv-role.git
+  url = https://github.com/BrandyMint/ansible-rbenv-role.git
