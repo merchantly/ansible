@@ -25,7 +25,7 @@
 ##
 distribution ?= ubuntu
 version      ?= bionic
-container_id ?= $(mktemp)
+container_id ?= $(shell mktemp)
 playbook   ?= main
 env        ?= hosts.ini
 mkfile_dir ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -124,8 +124,8 @@ test_prepare_docker:
 test: test_prepare_docker test_run_docker test_run test_clean ## make test [distrubition=ubuntu] [version=bionic] # Run tests on dockered images
 
 test_run_docker:
-		@echo "${container_id}"
-		docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume="${PWD}":/etc/ansible/roles/merchantly:rw ${distribution}-${version}:ansible > "${container_id}"
+		@echo "container_id=${container_id}"
+		docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume="${PWD}":/etc/ansible/roles/merchantly:rw ${distribution}-${version}:ansible > ${container_id}
 
 test_run:
 		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook --version
