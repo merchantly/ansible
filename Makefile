@@ -23,6 +23,9 @@
 ##
 # VARIABLES
 ##
+distribution ?= ubuntu
+version      ?= bionic
+container_id ?= $(mktemp)
 playbook   ?= main
 env        ?= hosts.ini
 mkfile_dir ?= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -114,10 +117,30 @@ mandatory-host-param:
 mandatory-file-param:
 	@[ ! -z $(file) ]
 
+prepare_docker:
+		docker pull ${distribution}:${version}
+		docker build --no-cache --rm --file=travis/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible travis
+
+test: prepare_docker run_docker run_tests clean_tests ## make test [distrubition=ubuntu] [version=bionic] # Run tests on dockered images
+
+run_docker:
+		@echo "${container_id}"
+		docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume="${PWD}":/etc/ansible/roles/merchantly:rw ${distribution}-${version}:ansible > "${container_id}"
+
+run_tests:
+		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook --version
+		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml --syntax-check
+		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml
+		docker exec "$(shell cat ${container_id})" env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/roles/merchantly/travis/hosts.ini -v /etc/ansible/roles/merchantly/main.yml \
+			| grep -q 'changed=0.*failed=0' \
+			&& (echo 'Idempotence test: pass' && exit 0) \
+			|| (echo 'Idempotence test: fail' && exit 1) \
+
+clean_tests:
+		docker rm -f "$(shell cat ${container_id})"
+
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help
 
-test:
-		ip=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'`
