@@ -6,6 +6,16 @@ users:
     group: www-data
     auth_key: "{{ merchantly_user_auth_keys | default([]) }}"
 
+rbenv:
+  env: user
+  version: v1.1.1
+  default_ruby: 2.4.5
+  rubies:
+    - version: 2.4.5
+
+rbenv_users:
+  - "{{ merchantly_user }}"
+
 nvm_env: user
 nvm_users:
   - "{{ merchantly_user }}"
