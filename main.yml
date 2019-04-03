@@ -5,5 +5,5 @@
 - import_playbook: elasticsearch.yml
 - import_playbook: redis.yml
 - import_playbook: postgresql.yml
-- import_playbook: imagemagic.yml
+- import_playbook: imagemagick.yml
 - import_playbook: thumbor.yml
