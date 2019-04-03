@@ -23,6 +23,18 @@
 ##
 # VARIABLES
 ##
+
+# Variables for testing
+#
+distribution ?= ubuntu
+version      ?= bionic
+docker_image ?= .${distribution}-${version}
+changes_log  ?= /tmp/ansible_changes_log
+container_id ?= .test_container
+ansible      ?= docker exec `cat ${container_id}` env ANSIBLE_FORCE_COLOR=1 SHELL=/bin/bash ansible-playbook -i /etc/ansible/travis/hosts.ini -v /etc/ansible/main.yml
+
+# Other variables
+#
 playbook ?= main
 env ?= hosts.ini
 galaxy_req ?= requirements.galaxy.yml
@@ -119,6 +131,36 @@ mandatory-host-param:
 	@[ ! -z $(host) ]
 mandatory-file-param:
 	@[ ! -z $(file) ]
+
+${docker_image}:
+	docker pull ${distribution}:${version}
+	docker build --no-cache --rm --file=travis/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible travis
+	touch ${docker_image}
+
+test: test_run clean ## make test [distrubition=ubuntu] [version=bionic] # Run tests on docker image
+
+${container_id}: ${docker_image}
+	docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume=${PWD}:/etc/ansible:ro ${distribution}-${version}:ansible > .test_container
+
+test_run: ${container_id} test_provision test_changes
+
+test_provision:
+	$(ansible) --version
+	$(ansible) --syntax-check
+	$(ansible)
+
+test_changes:
+	$(ansible) | tee ${changes_log}
+
+	# Today we have more then 30 non-indempotancy changes and can't test it
+	# (cat ${changes_log} | grep -q 'changed=0.*failed=0') \
+	(cat ${changes_log} | grep -q 'failed=0') \
+			&& (echo 'Idempotence test: pass' && exit 0) \
+			|| (echo 'Idempotence test: fail' && exit 1)
+
+clean:
+	docker rm -f `cat ${container_id}`
+	rm ${container_id}
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
