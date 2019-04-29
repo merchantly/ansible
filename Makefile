@@ -142,7 +142,7 @@ test: test_run clean ## make test [distrubition=ubuntu] [version=bionic] # Run t
 ${container_id}: ${docker_image}
 	docker run --detach --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro --volume=${PWD}:/etc/ansible:ro ${distribution}-${version}:ansible > .test_container
 
-test_run: ${container_id} test_provision test_changes
+test_run: ${container_id} test_provision
 
 test_provision:
 	$(ansible) --version
