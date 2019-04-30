@@ -158,6 +158,9 @@ test_changes:
 			&& (echo 'Idempotence test: pass' && exit 0) \
 			|| (echo 'Idempotence test: fail' && exit 1)
 
+docker_shell:
+	docker exec -i -t `cat .test_container` /bin/bash
+
 clean:
 	docker rm -f `cat ${container_id}`
 	rm ${container_id}

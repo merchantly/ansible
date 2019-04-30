@@ -13,7 +13,7 @@ merchantly_db_user: "{{ merchantly_user }}"
 
 # Password for database account.
 # Value of the variable can be set from the environment variable or from the ansible vault.
-#merchantly_db_password: "{{ lookup('env','MERCHANTLY_DB_PASSWORD') }}"
+merchantly_db_password: "{{ lookup('env','MERCHANTLY_DB_PASSWORD') | default('password') }}"
 #merchantly_db_password: "{{ merchantly_db_password_vault }}"
 
 # How much memory can database use in megabytes. Default is 1/4 of total server memory.

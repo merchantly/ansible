@@ -31,7 +31,7 @@ es_enable_xpack: false
 es_plugins:
   - plugin: "http://dl.bintray.com/content/imotov/elasticsearch-plugins/org/elasticsearch/elasticsearch-analysis-morphology/{{ es_version }}/elasticsearch-analysis-morphology-{{ es_version }}.zip"
 
-postgresql_version: 9.6
+postgresql_version: 10
 postgresql_users:
   - name: "{{ merchantly_db_user }}"
     pass: "{{ merchantly_db_password }}"
@@ -80,10 +80,10 @@ postgresql_pg_hba_default:
     method: "{{ postgresql_default_auth_method }}"
     comment: "IPv6 local connections:"
 postgresql_max_connections: 250
-postgresql_max_memory: "{{ merchantly_db_max_memory | default(ansible_memtotal_mb / 4) }}"
-postgresql_shared_buffers: "{{ postgresql_max_memory | int / 4 }}MB"
-postgresql_work_mem: "{{ postgresql_max_memory }}KB"
-postgresql_effective_cache_size: "{{ postgresql_max_memory | int / 16 }}MB"
+postgresql_max_memory: "{{ merchantly_db_max_memory | default(ansible_memtotal_mb / 4) | int }}"
+postgresql_shared_buffers: "{{ (postgresql_max_memory | int / 4 ) | int }}MB"
+postgresql_work_mem: "{{ postgresql_max_memory }}kB"
+postgresql_effective_cache_size: "{{ (postgresql_max_memory | int / 16 ) | int }}MB"
 postgresql_min_wal_size: 1024MB
 postgresql_max_wal_size: 2048MB
 postgresql_wal_buffers: 16MB
