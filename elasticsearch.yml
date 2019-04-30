@@ -1,11 +1,8 @@
 - hosts: all
   pre_tasks:
-    - name: ensure pip package are installed
+    - name: ensure python-jmespath package are installed
       apt:
         name:
-          - python-pip
-    - name: install jmespath
-      pip:
-        name: jmespath
+          - python-jmespath
   roles:
     - elasticsearch
