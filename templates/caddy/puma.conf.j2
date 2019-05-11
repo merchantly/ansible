@@ -1,0 +1,33 @@
+{{ item.server_name }} {
+  log {{ item.app_dir }}/shared/log/caddy_access.log
+  errors {{ item.app_dir }}/shared/log/caddy_error.log
+
+  gzip
+
+  tls {{ caddy_tls_email }} {
+    max_certs {{ item.max_certs }}
+
+    {% if item.tls_ask is defined %}
+     ask {{ item.tls_ask }}
+    {% endif %}
+  }
+
+  header / -Server
+
+  root {{ item.root | default( item.app_dir + '/current/public' ) }}
+
+  rewrite {
+    if {path} is /
+    to /proxy/{uri}
+  }
+
+  rewrite {
+   to {path} /proxy/{uri}
+  }
+
+  proxy /proxy unix://{{ item.app_dir }}/shared/tmp/sockets/puma.sock {
+    except /assets
+    without /proxy
+    transparent
+  }
+}

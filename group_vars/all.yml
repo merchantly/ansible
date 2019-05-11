@@ -1,3 +1,22 @@
+caddy_systemd_nproc_limit: 512
+caddy_systemd_capabilities_enabled: true
+caddy_tls_email: "{{ support_email | default('servers@merchantly.io') }}"
+caddy_config: "import vhosts/*"
+
+
+caddy_vhosts:
+  - filename: "merchantly_app.conf"
+    server_name: "{{ merchantly_site_name }}"
+    template: "templates/caddy/puma.conf.j2"
+    app_dir: "/home/{{ merchantly_user }}/{{ merchantly_site_name }}"
+    max_certs: 1000
+  - filename: "merchantly_custom_domains.conf"
+    server_name: "*"
+    template: "templates/caddy/puma.conf.j2"
+    max_certs: 1000
+    tls_ask: "https://api.{{ merchantly_site_name }}/v1/certs"
+    app_dir: "/home/{{ merchantly_user }}/{{ merchantly_site_name }}"
+
 users_groups:
   - name: www-data
     system: true

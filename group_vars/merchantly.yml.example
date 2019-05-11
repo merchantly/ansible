@@ -20,7 +20,7 @@ merchantly_db_password: "{{ lookup('env','MERCHANTLY_DB_PASSWORD') | default('pa
 #merchantly_db_max_memory: 4096
 
 # Site DNS name
-merchantly_site_name: example.com
+merchantly_site_name: "{{ inventory_hostname }}"
 
 # Number of thumbor services that will be started. Default is 3.
 #merchantly_thumbor_count: 3

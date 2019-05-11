@@ -16,3 +16,6 @@
 [submodule "roles/postgresql"]
 	path = roles/postgresql
 	url = https://github.com/WolfgangPecho/postgresql.git
+[submodule "roles/caddy"]
+	path = roles/caddy
+	url = https://github.com/BrandyMint/caddy-ansible.git
