@@ -1,0 +1,12 @@
+{{ item.server_name }} {
+  tls {{ caddy_tls_email }} {
+    max_certs {{ item.max_certs }}
+  }
+
+  proxy / {{ item.upstreams }} {
+    transparent
+    timeout 5s
+  }
+
+  # Thumbor has internal cache
+}

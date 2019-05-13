@@ -162,9 +162,7 @@ docker_shell:
 	docker exec -i -t `cat .test_container` /bin/bash
 
 clean:
-	docker rm -f `cat ${container_id}`
-	rm ${container_id}
-	rm ${docker_image}
+	docker rm -f `cat ${container_id}` || rm ${container_id} || rm ${docker_image}
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
